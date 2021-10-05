@@ -159,8 +159,13 @@ public class App {
         SSLContext.setDefault(sslContext);
     }
 
+    private static final boolean DEBUG = false;
     private static String readCertificate() throws IOException {
-        List<String> strings = Files.readAllLines(Path.of("/home/valeriotor/go/pkg/mod/github.com/letsencrypt/pebble@v1.0.1/test/certs/pebble.minica.pem"));
+        List<String> strings;
+        if(DEBUG)
+            strings = Files.readAllLines(Path.of("/home/valeriotor/go/pkg/mod/github.com/letsencrypt/pebble@v1.0.1/test/certs/pebble.minica.pem"));
+        else
+            strings = Files.readAllLines(Path.of("../pebble.minica.pem"));
         strings.remove(0);
         strings.remove(strings.size()-1);
         return String.join("", strings);
