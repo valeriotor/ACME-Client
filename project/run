@@ -4,3 +4,4 @@ echo "Changing to ${DIRECTORY}"
 cd  "$DIRECTORY" || exit 1
 
 echo "Run your project here."
+mvn exec:java -Dexec.mainClass="com.valeriotor.acme.App" -f ACME\ Project/ -Dexec.args="$*"
