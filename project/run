@@ -5,4 +5,4 @@ cd  "$DIRECTORY" || exit 1
 
 echo "Run your project here."
 #mvn exec:java -Dexec.mainClass="com.valeriotor.acme.App" -f ACME\ Project/ -Dexec.args="$*"
-java -jar /ACME\ Project/target/acme-client-1.0-SNAPSHOT-jar-with-dependencies.jar $*
+java -jar ACME\ Project/target/acme-client-1.0-SNAPSHOT-jar-with-dependencies.jar $*
