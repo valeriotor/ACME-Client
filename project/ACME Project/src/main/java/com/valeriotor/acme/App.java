@@ -49,9 +49,8 @@ public class App {
         beginChallenge(challenge);
         JWSUtil jwsUtil = JWSUtil.getInstance();
         String s = jwsUtil.flattenedSignedJson(jwsUtil.generateProtectedHeaderKid(order.getAuthorizations().get(0)), "");
-        Thread.sleep(600);
+        Thread.sleep(2000);
         HttpResponse<String> send = HTTPUtil.postRequest(order.getAuthorizations().get(0), s);
-        System.out.println(send.body());
     }
 
     private static void initializeObjects(String[] args) throws IOException, InterruptedException, NoSuchAlgorithmException {
@@ -127,7 +126,6 @@ public class App {
     }
 
     private static void beginChallenge(Challenge challenge) throws NoSuchAlgorithmException, IOException, InterruptedException, SignatureException, InvalidKeyException {
-        System.out.println(challenge.getType());
         if (challenge.getType() == ChallengeType.HTTPS) {
             JWSUtil jwsUtil = JWSUtil.getInstance();
             httpChallengeServer.setKeyAuthorization(jwsUtil.generateKeyAuthorization(challenge.getToken()));
@@ -159,7 +157,7 @@ public class App {
         SSLContext.setDefault(sslContext);
     }
 
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
     private static String readCertificate() throws IOException {
         List<String> strings;
         if(DEBUG)

@@ -12,7 +12,6 @@ public class JWSUtil {
 
     private static final String jwkTemplate = "{\"alg\":\"RS256\",\n" +
             "      \"e\":\"%s\",\n" +
-            "      \"kid\":\"%d\",\n" +
             "      \"kty\":\"RSA\",\n" +
             "      \"n\":\"%s\"\n" +
             "     }";
@@ -83,19 +82,25 @@ public class JWSUtil {
     private String generateJwk() {
         return String.format(jwkTemplate,
                 new String(Base64.getUrlEncoder().withoutPadding().encode(publicKey.getPublicExponent().toByteArray())),
-                kid,
                 new String(Base64.getUrlEncoder().withoutPadding().encode(publicKey.getModulus().toByteArray())));
     }
 
     private String generateTinyJwk() {
+        byte[] bytes = publicKey.getModulus().toByteArray();
+        if (bytes.length > 256) {
+            byte[] temp = new byte[256];
+            for (int i = bytes.length-256; i < bytes.length; i++) {
+                temp[i + 256 - bytes.length] = bytes[i];
+            }
+            bytes = temp;
+        }
         return String.format(tinyJwkTemplate,
                 new String(Base64.getUrlEncoder().withoutPadding().encode(publicKey.getPublicExponent().toByteArray())),
-                new String(Base64.getUrlEncoder().withoutPadding().encode(publicKey.getModulus().toByteArray())));
+                new String(Base64.getUrlEncoder().withoutPadding().encode(bytes)));
     }
 
     private String generateBase64JwkThumbprint() throws NoSuchAlgorithmException {
         String jwk = generateTinyJwk().replaceAll("\\s+", "");
-        System.out.println(jwk);
         MessageDigest digest = MessageDigest.getInstance("SHA-256");
         byte[] hash = digest.digest(jwk.getBytes(StandardCharsets.UTF_8));
         return new String(Base64.getUrlEncoder().withoutPadding().encode(hash));

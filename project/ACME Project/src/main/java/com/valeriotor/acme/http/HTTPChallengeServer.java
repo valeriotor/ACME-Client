@@ -20,7 +20,6 @@ public class HTTPChallengeServer extends NanoHTTPD {
     public Response serve(IHTTPSession session) {
         Response r = newFixedLengthResponse(keyAuthorization.get());
         r.addHeader("Content-Type", "application/octet-stream");
-        System.out.println(keyAuthorization.get());
         return r;
     }
 }
