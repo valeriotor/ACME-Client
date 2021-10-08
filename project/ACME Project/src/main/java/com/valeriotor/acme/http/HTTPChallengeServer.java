@@ -1,12 +1,13 @@
 package com.valeriotor.acme.http;
 
+import com.valeriotor.acme.App;
 import fi.iki.elonen.NanoHTTPD;
 
 import java.util.concurrent.atomic.AtomicReference;
 
 public class HTTPChallengeServer extends NanoHTTPD {
 
-    private AtomicReference<String> keyAuthorization = new AtomicReference<>();
+    private final AtomicReference<String> keyAuthorization = new AtomicReference<>();
 
     public HTTPChallengeServer(int port) {
         super(port);
@@ -20,6 +21,7 @@ public class HTTPChallengeServer extends NanoHTTPD {
     public Response serve(IHTTPSession session) {
         Response r = newFixedLengthResponse(keyAuthorization.get());
         r.addHeader("Content-Type", "application/octet-stream");
+        App.beginPolling();
         return r;
     }
 }

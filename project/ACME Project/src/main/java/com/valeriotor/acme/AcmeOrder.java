@@ -5,6 +5,7 @@ import javax.json.JsonObject;
 import javax.json.JsonReader;
 import javax.json.JsonValue;
 import java.io.StringReader;
+import java.net.http.HttpResponse;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -18,9 +19,11 @@ public class AcmeOrder {
     private final String certificate;
     private final List<Identifier> identifiers;
     private final JsonObject error;
+    private final String location;
 
-
-    public AcmeOrder(String jsonOrder) {
+    public AcmeOrder(HttpResponse<String> response) {
+        location = response.headers().firstValue("Location").orElse(null);
+        String jsonOrder = response.body();
         JsonReader reader = Json.createReader(new StringReader(jsonOrder));
         JsonObject jsonObject = reader.readObject();
         this.status = jsonObject.getString("status");
@@ -72,6 +75,10 @@ public class AcmeOrder {
 
     public JsonObject getError() {
         return error;
+    }
+
+    public String getLocation() {
+        return location;
     }
 
     @Override

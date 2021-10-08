@@ -110,4 +110,11 @@ public class JWSUtil {
         return token + "." + generateBase64JwkThumbprint();
     }
 
+    public PrivateKey getPrivateKey() {
+        return privateKey;
+    }
+
+    public RSAPublicKey getPublicKey() {
+        return publicKey;
+    }
 }
