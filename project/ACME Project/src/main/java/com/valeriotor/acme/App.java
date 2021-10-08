@@ -87,44 +87,26 @@ public class App {
                 KeyStore store = KeyStore.getInstance(KeyStore.getDefaultType());
                 char[] password = "perrig".toCharArray();
                 store.load(null, password);
-                int i = 0;
-                /*for (Certificate c : certificates) {
-                    store.setCertificateEntry("pebble" + (i++), c);
-                }*/
                 store.setKeyEntry("main",JWSUtil.getInstance().getPrivateKey(), password, certificates.toArray(new Certificate[]{}));
-                /*Path source = Paths.get(App.class.getResource("/").getPath());
-                Path newFile = Paths.get(source.toAbsolutePath() + "/castore.jks");
-                Files.createDirectories(newFile.getParent());
-                if(!Files.exists(newFile))
-                    Files.createFile(newFile);*/
-                /*try (FileOutputStream fo = new FileOutputStream("castore2.jks")) {
-                    store.store(fo, password);
-                }*/
                 TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
                 tmf.init(store);
-                //File f = new File("castore.jks");
                 KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
                 SSLContext tls = SSLContext.getInstance("TLS");
                 keyManagerFactory.init(store, password);
                 tls.init(keyManagerFactory.getKeyManagers(), tmf.getTrustManagers(), null);
                 certificateServer.makeSecure(NanoHTTPD.makeSSLSocketFactory(store, keyManagerFactory.getKeyManagers()), null);
-                //certificateServer.makeSecure(tls.getServerSocketFactory(), null);
                 File f = new File("src/main/resources/keystore2.jks");
-                //System.setProperty("javax.net.ssl.trustStore", f.getAbsolutePath());
-//                certificateServer.setServerSocketFactory(new NanoHTTPD.SecureServerSocketFactory(NanoHTTPD.makeSSLSocketFactory("/" +f.getName(), "perrig".toCharArray()), null));
 
-        //        certificateServer.start();
-//                 certificateServer.setServerSocketFactory(new NanoHTTPD.SecureServerSocketFactory(NanoHTTPD.makeSSLSocketFactory(newFile.toFile().getName(), password), null));
                 certificateServer.setServerSocketFactory(new NanoHTTPD.SecureServerSocketFactory(NanoHTTPD.makeSSLSocketFactory(store, keyManagerFactory), null));
                 HTTPServerManager manager = new HTTPServerManager(certificateServer, null);
                 servers.add(manager);
                 new Thread(manager).start();
-                //new Thread(() -> secureServver(certificates)).start();
             }
         }
     }
 
     private static void initializeObjects(String[] args) throws IOException, InterruptedException, NoSuchAlgorithmException {
+        System.out.println("Initializing objects");
         ArgumentParser.tryCreateInstance(args);
         AcmeDirContainer.tryCreateInstance();
         NonceUtil.tryCreateInstance();
@@ -132,6 +114,7 @@ public class App {
     }
 
     private static void startServers() throws IOException, BrokenBarrierException, InterruptedException {
+        System.out.println("Starting servers");
         CyclicBarrier barrier = new CyclicBarrier(3);
         httpChallengeServer = new HTTPChallengeServer(5002);
         HTTPServerManager challengeServer = new HTTPServerManager(httpChallengeServer, barrier);
@@ -144,6 +127,7 @@ public class App {
     }
 
     private static void createAccount() throws NoSuchAlgorithmException, SignatureException, InvalidKeyException, IOException, InterruptedException {
+        System.out.println("Creating account");
         String payload = "{\n" +
                 "       \"termsOfServiceAgreed\": true,\n" + //maybe comment this out?
                 "       \"contact\": [\n" +
@@ -161,6 +145,7 @@ public class App {
     }
 
     private static AcmeOrder createOrder() throws IOException, InterruptedException, NoSuchAlgorithmException, SignatureException, InvalidKeyException {
+        System.out.println("Creating order");
         StringBuilder sb = new StringBuilder();
         for (String domain : ArgumentParser.getInstance().getDomains()) {
             Identifier i = new Identifier(domain);
@@ -180,6 +165,7 @@ public class App {
     }
 
     private static Challenge getChallenge(AcmeOrder order) throws IOException, InterruptedException, NoSuchAlgorithmException, SignatureException, InvalidKeyException {
+        System.out.println("Getting challenge");
         JWSUtil jwsUtil = JWSUtil.getInstance();
         String s = jwsUtil.flattenedSignedJson(jwsUtil.generateProtectedHeaderKid(order.getAuthorizations().get(0)), "");
         HttpResponse<String> send = HTTPUtil.postRequest(order.getAuthorizations().get(0), s);
@@ -194,6 +180,7 @@ public class App {
     }
 
     private static void beginChallenge(Challenge challenge) throws NoSuchAlgorithmException, IOException, InterruptedException, SignatureException, InvalidKeyException {
+        System.out.println("Starting challenge");
         if (challenge.getType() == ChallengeType.HTTPS) {
             JWSUtil jwsUtil = JWSUtil.getInstance();
             httpChallengeServer.setKeyAuthorization(jwsUtil.generateKeyAuthorization(challenge.getToken()));
@@ -232,6 +219,7 @@ public class App {
     }
 
     private static boolean finalizeOrder(AcmeOrder order) throws IOException, InterruptedException, NoSuchAlgorithmException, SignatureException, InvalidKeyException, NoSuchProviderException, CertificateEncodingException, OperatorCreationException {
+        System.out.println("Finalizing order");
         JWSUtil jwsUtil = JWSUtil.getInstance();
         String name = "CN=Valerio, OU=IT, O=ETH, L=Zurich, ST=Switzerland, C=CH";
         X500Principal subject = new X500Principal(name);
@@ -259,6 +247,7 @@ public class App {
     }
 
     private static String downloadCertificate(AcmeOrder order) throws InterruptedException, IOException, NoSuchAlgorithmException, SignatureException, InvalidKeyException {
+        System.out.println("Downloading certificate");
         JWSUtil jwsUtil = JWSUtil.getInstance();
         String url = order.getLocation();
         AcmeOrder finalOrder = null;
