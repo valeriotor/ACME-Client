@@ -27,6 +27,7 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.security.auth.x500.X500Principal;
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.net.http.HttpResponse;
 import java.nio.file.Files;
@@ -87,34 +88,38 @@ public class App {
                 char[] password = "perrig".toCharArray();
                 store.load(null, password);
                 int i = 0;
-                for (Certificate c : certificates) {
+                /*for (Certificate c : certificates) {
                     store.setCertificateEntry("pebble" + (i++), c);
-                }
-                //store.setCertificateEntry("pebble0", certificates.get(0));
+                }*/
+                store.setKeyEntry("main",JWSUtil.getInstance().getPrivateKey(), password, certificates.toArray(new Certificate[]{}));
                 /*Path source = Paths.get(App.class.getResource("/").getPath());
                 Path newFile = Paths.get(source.toAbsolutePath() + "/castore.jks");
                 Files.createDirectories(newFile.getParent());
                 if(!Files.exists(newFile))
-                    Files.createFile(newFile);
-                try (FileOutputStream fo = new FileOutputStream(newFile.toFile())) {
+                    Files.createFile(newFile);*/
+                /*try (FileOutputStream fo = new FileOutputStream("castore2.jks")) {
                     store.store(fo, password);
                 }*/
                 TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
                 tmf.init(store);
                 //File f = new File("castore.jks");
-                //System.setProperty("javax.net.ssl.trustStore", f.getAbsolutePath());
                 KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
                 SSLContext tls = SSLContext.getInstance("TLS");
                 keyManagerFactory.init(store, password);
                 tls.init(keyManagerFactory.getKeyManagers(), tmf.getTrustManagers(), null);
-                SSLContext.setDefault(tls);
                 certificateServer.makeSecure(NanoHTTPD.makeSSLSocketFactory(store, keyManagerFactory.getKeyManagers()), null);
                 //certificateServer.makeSecure(tls.getServerSocketFactory(), null);
+                File f = new File("src/main/resources/keystore2.jks");
+                //System.setProperty("javax.net.ssl.trustStore", f.getAbsolutePath());
+//                certificateServer.setServerSocketFactory(new NanoHTTPD.SecureServerSocketFactory(NanoHTTPD.makeSSLSocketFactory("/" +f.getName(), "perrig".toCharArray()), null));
+
+        //        certificateServer.start();
 //                 certificateServer.setServerSocketFactory(new NanoHTTPD.SecureServerSocketFactory(NanoHTTPD.makeSSLSocketFactory(newFile.toFile().getName(), password), null));
-                //certificateServer.setServerSocketFactory(new NanoHTTPD.SecureServerSocketFactory(NanoHTTPD.makeSSLSocketFactory(store, keyManagerFactory), null));
+                certificateServer.setServerSocketFactory(new NanoHTTPD.SecureServerSocketFactory(NanoHTTPD.makeSSLSocketFactory(store, keyManagerFactory), null));
                 HTTPServerManager manager = new HTTPServerManager(certificateServer, null);
                 servers.add(manager);
                 new Thread(manager).start();
+                //new Thread(() -> secureServver(certificates)).start();
             }
         }
     }
@@ -297,7 +302,7 @@ public class App {
         return certificate;
     }
 
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
     private static String readCertificate() throws IOException {
         List<String> strings;
         if(DEBUG)
@@ -318,6 +323,5 @@ public class App {
         }
         servers.forEach(HTTPServerManager::stop);
     }
-
 
 }
