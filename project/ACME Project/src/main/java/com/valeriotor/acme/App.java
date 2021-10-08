@@ -116,7 +116,7 @@ public class App {
     private static void startServers() throws IOException, BrokenBarrierException, InterruptedException {
         System.out.println("Starting servers");
         CyclicBarrier barrier = new CyclicBarrier(3);
-        httpChallengeServer = new HTTPChallengeServer(ArgumentParser.getInstance().getDomains().get(0), 5002);
+        httpChallengeServer = new HTTPChallengeServer(5002);
         HTTPServerManager challengeServer = new HTTPServerManager(httpChallengeServer, barrier);
         HTTPServerManager shutdownServer = new HTTPServerManager(new HTTPShutdownServer(5003, App::stopServers), barrier);
         servers.add(challengeServer);

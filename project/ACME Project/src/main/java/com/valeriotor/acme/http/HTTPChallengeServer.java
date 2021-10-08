@@ -9,8 +9,8 @@ public class HTTPChallengeServer extends NanoHTTPD {
 
     private final AtomicReference<String> keyAuthorization = new AtomicReference<>();
 
-    public HTTPChallengeServer(String hostname, int port) {
-        super(hostname, port);
+    public HTTPChallengeServer(int port) {
+        super(port);
     }
 
     public void setKeyAuthorization(String keyAuthorization) {
