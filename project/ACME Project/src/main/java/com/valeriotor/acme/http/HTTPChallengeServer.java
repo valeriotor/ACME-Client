@@ -9,8 +9,8 @@ public class HTTPChallengeServer extends NanoHTTPD {
 
     private final AtomicReference<String> keyAuthorization = new AtomicReference<>();
 
-    public HTTPChallengeServer(int port) {
-        super(port);
+    public HTTPChallengeServer(String hostname, int port) {
+        super(hostname, port);
     }
 
     public void setKeyAuthorization(String keyAuthorization) {
@@ -19,6 +19,7 @@ public class HTTPChallengeServer extends NanoHTTPD {
 
     @Override
     public Response serve(IHTTPSession session) {
+        System.out.println("RECEIVED CHALLENGE!!!!!!!!!!!!!!!!!!");
         Response r = newFixedLengthResponse(keyAuthorization.get());
         r.addHeader("Content-Type", "application/octet-stream");
         App.beginPolling();

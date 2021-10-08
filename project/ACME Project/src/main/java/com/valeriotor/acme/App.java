@@ -116,7 +116,7 @@ public class App {
     private static void startServers() throws IOException, BrokenBarrierException, InterruptedException {
         System.out.println("Starting servers");
         CyclicBarrier barrier = new CyclicBarrier(3);
-        httpChallengeServer = new HTTPChallengeServer(5002);
+        httpChallengeServer = new HTTPChallengeServer(ArgumentParser.getInstance().getDomains().get(0), 5002);
         HTTPServerManager challengeServer = new HTTPServerManager(httpChallengeServer, barrier);
         HTTPServerManager shutdownServer = new HTTPServerManager(new HTTPShutdownServer(5003, App::stopServers), barrier);
         servers.add(challengeServer);
@@ -186,6 +186,7 @@ public class App {
             httpChallengeServer.setKeyAuthorization(jwsUtil.generateKeyAuthorization(challenge.getToken()));
             String message = jwsUtil.flattenedSignedJson(jwsUtil.generateProtectedHeaderKid(challenge.getUrl()), "{}");
             HttpResponse<String> response = HTTPUtil.postRequest(challenge.getUrl(), message);
+            System.out.println(response.body());
         }
     }
 
@@ -200,6 +201,7 @@ public class App {
         do {
             String s = jwsUtil.flattenedSignedJson(jwsUtil.generateProtectedHeaderKid(order.getAuthorizations().get(0)), "");
             HttpResponse<String> response = HTTPUtil.postRequest(order.getAuthorizations().get(0), s);
+            System.out.println(response.body());
             List<Challenge> challengeList = Challenge.getChallengesFromAuthorizationResponse(response);
             Challenge challenge = null;
             for (Challenge c : challengeList) {
