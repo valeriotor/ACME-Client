@@ -16,6 +16,7 @@ public class DNSServer extends Thread{
     private final String resultForAQuery;
     private String textChallenge;
     private boolean running = true;
+    private int debugCounter = 0;
 
     public DNSServer(int port) throws SocketException {
         this.socket = new DatagramSocket(port);
@@ -40,6 +41,20 @@ public class DNSServer extends Thread{
                 if (type == Type.A || type == Type.AAAA) {
                     response.addRecord(Record.fromString(request.getQuestion().getName(), Type.A, DClass.IN, 65536L, resultForAQuery, request.getQuestion().getName()), Section.ANSWER);
                 } else if (type == Type.TXT) {
+                    String textChallenge = this.textChallenge;
+                    String name = request.getQuestion().getName().toString();
+                    if (debugCounter == 0 || debugCounter == 1) {
+                        if (name.charAt(name.length() - 1) == '.') {
+                            name = name.substring(0, name.length()-1);
+                        }
+                    }
+                    if (debugCounter == 1 || debugCounter == 2) {
+                        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+                        byte[] hash = digest.digest(textChallenge.getBytes(StandardCharsets.UTF_8));
+                        textChallenge = new String(Base64.getUrlEncoder().withoutPadding().encode(hash));
+                    }
+                    System.out.println(debugCounter);
+                    debugCounter++;
                     response.addRecord(Record.fromString(request.getQuestion().getName(), Type.TXT, DClass.IN, 65536L, textChallenge, request.getQuestion().getName()), Section.ANSWER);
                 }
                 System.out.println("RESPONSE: " + response);
@@ -47,7 +62,7 @@ public class DNSServer extends Thread{
                 byte[] responseBytes = response.toWire(512);
                 DatagramPacket responsePacket = new DatagramPacket(responseBytes, responseBytes.length, packet.getAddress(), packet.getPort());
                 socket.send(responsePacket);
-            } catch (IOException e) {
+            } catch (IOException | NoSuchAlgorithmException e) {
                 e.printStackTrace();
             }
         }
@@ -55,8 +70,9 @@ public class DNSServer extends Thread{
     }
 
     public void setTextChallenge(String textChallenge) throws NoSuchAlgorithmException {
-        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        /*MessageDigest digest = MessageDigest.getInstance("SHA-256");
         byte[] hash = digest.digest(textChallenge.getBytes(StandardCharsets.UTF_8));
-        this.textChallenge = new String(Base64.getUrlEncoder().withoutPadding().encode(hash));
+        this.textChallenge = new String(Base64.getUrlEncoder().withoutPadding().encode(hash));*/
+        this.textChallenge = textChallenge;
     }
 }
