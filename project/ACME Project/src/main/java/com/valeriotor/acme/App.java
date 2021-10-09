@@ -72,10 +72,6 @@ public class App {
         boolean orderFinalized = finalizeOrder(order);
         if (orderFinalized) {
             String certificateString = downloadCertificate(order);
-            Thread.sleep(100);
-            servers.get(servers.size() - 1).stop();
-            servers.remove(servers.size() - 1);
-            Thread.sleep(100);
             List<List<String>> certificateLines = new ArrayList<>();
             Scanner scanner = new Scanner(certificateString);
             while (scanner.hasNextLine()) {
