@@ -130,17 +130,14 @@ public class App {
         System.out.println("Starting servers");
         dnsServer = new DNSServer(10053);
         dnsServer.start();
-        CyclicBarrier barrier = new CyclicBarrier(4);
+        CyclicBarrier barrier = new CyclicBarrier(3);
         httpChallengeServer = new HTTPChallengeServer(5002);
         HTTPServerManager challengeServer = new HTTPServerManager(httpChallengeServer, barrier);
         HTTPServerManager shutdownServer = new HTTPServerManager(new HTTPShutdownServer(5003, App::stopServers), barrier);
-        HTTPServerManager testCertificateServer = new HTTPServerManager(new HTTPCertificateServer(5001),  barrier);
         servers.add(challengeServer);
         servers.add(shutdownServer);
-        servers.add(testCertificateServer);
         Thread t1 = new Thread(challengeServer);t1.setDaemon(true);t1.start();
         Thread t2 = new Thread(shutdownServer);t2.setDaemon(true);t2.start();
-        Thread t3 = new Thread(testCertificateServer);t3.setDaemon(true);t3.start();
         barrier.await();
     }
 

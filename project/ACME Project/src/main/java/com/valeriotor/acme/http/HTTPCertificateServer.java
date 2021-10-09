@@ -2,12 +2,19 @@ package com.valeriotor.acme.http;
 
 import fi.iki.elonen.NanoHTTPD;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.Socket;
 
 public class HTTPCertificateServer extends NanoHTTPD {
     public HTTPCertificateServer(int port) {
         super(port);
+    }
+
+    @Override
+    public void start() throws IOException {
+        super.start();
+        System.out.println("Certificate server started");
     }
 
     @Override

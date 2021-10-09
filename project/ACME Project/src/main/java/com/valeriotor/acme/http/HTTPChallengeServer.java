@@ -19,7 +19,6 @@ public class HTTPChallengeServer extends NanoHTTPD {
 
     @Override
     public Response serve(IHTTPSession session) {
-        System.out.println("RECEIVED CHALLENGE!!!!!!!!!!!!!!!!!!");
         Response r = newFixedLengthResponse(keyAuthorization.get());
         r.addHeader("Content-Type", "application/octet-stream");
         App.beginPolling();
