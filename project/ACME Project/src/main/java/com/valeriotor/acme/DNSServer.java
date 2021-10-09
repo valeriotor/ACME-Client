@@ -34,6 +34,13 @@ public class DNSServer extends Thread{
                     byte[] responseBytes = response.toWire(512);
                     DatagramPacket responsePacket = new DatagramPacket(responseBytes, responseBytes.length, packet.getAddress(), packet.getPort());
                     socket.send(responsePacket);
+                } else if (request.getQuestion().getType() == Type.AAAA) {
+                    Message response = new Message(request.getHeader().getID());
+                    response.addRecord(request.getQuestion(), Section.QUESTION);
+                    response.addRecord(Record.fromString(Name.root, Type.AAAA, DClass.IN, 65536L, resultForAQuery, Name.root), Section.ANSWER);
+                    byte[] responseBytes = response.toWire(512);
+                    DatagramPacket responsePacket = new DatagramPacket(responseBytes, responseBytes.length, packet.getAddress(), packet.getPort());
+                    socket.send(responsePacket);
                 }
 
             } catch (IOException e) {
