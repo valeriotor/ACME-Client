@@ -51,6 +51,7 @@ public class App {
     private static HTTPChallengeServer httpChallengeServer;
     private static CountDownLatch beginPollLatch = new CountDownLatch(1);
     private static DNSServer dnsServer;
+    private static KeyPair certificateKeyPair;
 
 
     public static void main(String[] args) throws InterruptedException, NoSuchAlgorithmException, SignatureException, InvalidKeyException, IOException, CertificateException, KeyStoreException, KeyManagementException, BrokenBarrierException, NoSuchProviderException, OperatorCreationException, UnrecoverableKeyException {
@@ -88,7 +89,7 @@ public class App {
                 KeyStore store = KeyStore.getInstance(KeyStore.getDefaultType());
                 char[] password = "perrig".toCharArray();
                 store.load(null, password);
-                store.setKeyEntry("main",JWSUtil.getInstance().getPrivateKey(), password, certificates.toArray(new Certificate[]{}));
+                store.setKeyEntry("main", certificateKeyPair.getPrivate(), password, certificates.toArray(new Certificate[]{}));
                 TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
                 tmf.init(store);
                 KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
@@ -228,11 +229,14 @@ public class App {
     private static boolean finalizeOrder(AcmeOrder order) throws IOException, InterruptedException, NoSuchAlgorithmException, SignatureException, InvalidKeyException, NoSuchProviderException, CertificateEncodingException, OperatorCreationException {
         System.out.println("Finalizing order");
         JWSUtil jwsUtil = JWSUtil.getInstance();
+        KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
+        kpg.initialize(2048);
+        certificateKeyPair = kpg.generateKeyPair();
         String name = "CN=Valerio, OU=IT, O=ETH, L=Zurich, ST=Switzerland, C=CH";
         X500Principal subject = new X500Principal(name);
         List<String> domains = ArgumentParser.getInstance().getDomains();
-        ContentSigner signGen = new JcaContentSignerBuilder("SHA256withRSA").build(jwsUtil.getPrivateKey());
-        PKCS10CertificationRequestBuilder builder = new JcaPKCS10CertificationRequestBuilder(subject, jwsUtil.getPublicKey());
+        ContentSigner signGen = new JcaContentSignerBuilder("SHA256withRSA").build(certificateKeyPair.getPrivate());
+        PKCS10CertificationRequestBuilder builder = new JcaPKCS10CertificationRequestBuilder(subject, certificateKeyPair.getPublic());
         List<GeneralName> generalNames = new ArrayList<>();
         for (String s: domains) {
             GeneralName generalName = new GeneralName(GeneralName.dNSName, s);

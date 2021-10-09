@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class AcmeOrder {
-    private String status;
+    private final String status;
     private final String expires;
     private final String notBefore;
     private final String notAfter;
@@ -26,11 +26,7 @@ public class AcmeOrder {
         String jsonOrder = response.body();
         JsonReader reader = Json.createReader(new StringReader(jsonOrder));
         JsonObject jsonObject = reader.readObject();
-        try {
-            this.status = jsonObject.getString("status");
-        } catch (ClassCastException e) {
-            this.status = Integer.toString(jsonObject.getInt("status"));
-        }
+        this.status = jsonObject.getString("status");
         this.expires = jsonObject.getString("expires", null);
         this.notBefore = jsonObject.getString("notBefore", null);
         this.notAfter = jsonObject.getString("notAfter", null);
