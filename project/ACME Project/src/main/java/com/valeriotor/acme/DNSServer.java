@@ -27,6 +27,7 @@ public class DNSServer extends Thread{
                 socket.receive(packet);
                 Message request = new Message(buf);
                 System.out.println("Received DNS packet, record type: " + request.getQuestion().getType());
+                System.out.println("Message: " + request);
                 if (request.getQuestion().getType() == Type.A || request.getQuestion().getType() == Type.A) {
                     Message response = new Message(request.getHeader().getID());
                     response.addRecord(request.getQuestion(), Section.QUESTION);
