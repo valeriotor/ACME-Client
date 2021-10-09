@@ -50,6 +50,7 @@ public class App {
     private static List<HTTPServerManager> servers = new ArrayList<>();
     private static HTTPChallengeServer httpChallengeServer;
     private static CountDownLatch beginPollLatch = new CountDownLatch(1);
+    private static DNSServer dnsServer;
 
 
     public static void main(String[] args) throws InterruptedException, NoSuchAlgorithmException, SignatureException, InvalidKeyException, IOException, CertificateException, KeyStoreException, KeyManagementException, BrokenBarrierException, NoSuchProviderException, OperatorCreationException, UnrecoverableKeyException {
@@ -115,6 +116,8 @@ public class App {
 
     private static void startServers() throws IOException, BrokenBarrierException, InterruptedException {
         System.out.println("Starting servers");
+        dnsServer = new DNSServer(10053);
+        dnsServer.start();
         CyclicBarrier barrier = new CyclicBarrier(3);
         httpChallengeServer = new HTTPChallengeServer(5002);
         HTTPServerManager challengeServer = new HTTPServerManager(httpChallengeServer, barrier);
