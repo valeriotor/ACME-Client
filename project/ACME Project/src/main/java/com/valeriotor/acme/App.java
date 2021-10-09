@@ -218,7 +218,6 @@ public class App {
         do {
             String s = jwsUtil.flattenedSignedJson(jwsUtil.generateProtectedHeaderKid(order.getAuthorizations().get(0)), "");
             HttpResponse<String> response = HTTPUtil.postRequest(order.getAuthorizations().get(0), s);
-            System.out.println(response.body());
             List<Challenge> challengeList = Challenge.getChallengesFromAuthorizationResponse(response);
             Challenge challenge = null;
             for (Challenge c : challengeList) {
