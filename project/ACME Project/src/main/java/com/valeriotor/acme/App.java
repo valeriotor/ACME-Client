@@ -61,50 +61,53 @@ public class App {
         startServers();
         createAccount();
         AcmeOrder order = createOrder();
-        Challenge challenge = getChallenge(order);
-        beginChallenge(challenge);
-        boolean result = pollAuthorizationResult(order);
-        if (result) {
-            boolean orderFinalized = finalizeOrder(order);
-            if (orderFinalized) {
-                String certificateString = downloadCertificate(order);
-                System.out.println(certificateString);
-                List<List<String>> certificateLines = new ArrayList<>();
-                Scanner scanner = new Scanner(certificateString);
-                while (scanner.hasNextLine()) {
-                    String line = scanner.nextLine();
-                    if (line.toLowerCase().contains("begin certificate")) {
-                        certificateLines.add(new ArrayList<>());
-                    } else if (!line.toLowerCase().contains("end certificate")) {
-                        certificateLines.get(certificateLines.size() - 1).add(line);
-                    }
-                }
-                List<Certificate> certificates = new ArrayList<>();
-                for (List<String> l : certificateLines) {
-                    String join = String.join("", l);
-                    Certificate certificate1 = getCertificate(join);
-                    certificates.add(certificate1);
-                }
-                NanoHTTPD certificateServer = new HTTPCertificateServer(5001, certificateString);
-                KeyStore store = KeyStore.getInstance(KeyStore.getDefaultType());
-                char[] password = "perrig".toCharArray();
-                store.load(null, password);
-                store.setKeyEntry("main", certificateKeyPair.getPrivate(), password, certificates.toArray(new Certificate[]{}));
-                TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
-                tmf.init(store);
-                KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-                SSLContext tls = SSLContext.getInstance("TLS");
-                keyManagerFactory.init(store, password);
-                tls.init(keyManagerFactory.getKeyManagers(), tmf.getTrustManagers(), null);
-                certificateServer.makeSecure(NanoHTTPD.makeSSLSocketFactory(store, keyManagerFactory.getKeyManagers()), null);
-                File f = new File("src/main/resources/keystore2.jks");
-
-                certificateServer.setServerSocketFactory(new NanoHTTPD.SecureServerSocketFactory(NanoHTTPD.makeSSLSocketFactory(store, keyManagerFactory), null));
-                HTTPServerManager manager = new HTTPServerManager(certificateServer, null);
-                servers.add(manager);
-                new Thread(manager).start();
+        List<Challenge> challenges = getChallenges(order);
+        for (Challenge c : challenges) {
+            beginChallenge(c);
+            if (!pollAuthorizationResult(order)) {
+                return;
             }
         }
+        boolean orderFinalized = finalizeOrder(order);
+        if (orderFinalized) {
+            String certificateString = downloadCertificate(order);
+            System.out.println(certificateString);
+            List<List<String>> certificateLines = new ArrayList<>();
+            Scanner scanner = new Scanner(certificateString);
+            while (scanner.hasNextLine()) {
+                String line = scanner.nextLine();
+                if (line.toLowerCase().contains("begin certificate")) {
+                    certificateLines.add(new ArrayList<>());
+                } else if (!line.toLowerCase().contains("end certificate")) {
+                    certificateLines.get(certificateLines.size() - 1).add(line);
+                }
+            }
+            List<Certificate> certificates = new ArrayList<>();
+            for (List<String> l : certificateLines) {
+                String join = String.join("", l);
+                Certificate certificate1 = getCertificate(join);
+                certificates.add(certificate1);
+            }
+            NanoHTTPD certificateServer = new HTTPCertificateServer(5001, certificateString);
+            KeyStore store = KeyStore.getInstance(KeyStore.getDefaultType());
+            char[] password = "perrig".toCharArray();
+            store.load(null, password);
+            store.setKeyEntry("main", certificateKeyPair.getPrivate(), password, certificates.toArray(new Certificate[]{}));
+            TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
+            tmf.init(store);
+            KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+            SSLContext tls = SSLContext.getInstance("TLS");
+            keyManagerFactory.init(store, password);
+            tls.init(keyManagerFactory.getKeyManagers(), tmf.getTrustManagers(), null);
+            certificateServer.makeSecure(NanoHTTPD.makeSSLSocketFactory(store, keyManagerFactory.getKeyManagers()), null);
+            File f = new File("src/main/resources/keystore2.jks");
+
+            certificateServer.setServerSocketFactory(new NanoHTTPD.SecureServerSocketFactory(NanoHTTPD.makeSSLSocketFactory(store, keyManagerFactory), null));
+            HTTPServerManager manager = new HTTPServerManager(certificateServer, null);
+            servers.add(manager);
+            new Thread(manager).start();
+        }
+
     }
 
     private static void initializeObjects(String[] args) throws IOException, InterruptedException, NoSuchAlgorithmException {
@@ -165,22 +168,27 @@ public class App {
         String message = jwsUtil.flattenedSignedJson(header, payload);
 
         HttpResponse<String> send = HTTPUtil.postRequest(dirContainer.getNewOrderUrl(), message);
+        System.out.println(send.body());
         return new AcmeOrder(send);
     }
 
-    private static Challenge getChallenge(AcmeOrder order) throws IOException, InterruptedException, NoSuchAlgorithmException, SignatureException, InvalidKeyException {
-        System.out.println("Getting challenge");
+    private static List<Challenge> getChallenges(AcmeOrder order) throws IOException, InterruptedException, NoSuchAlgorithmException, SignatureException, InvalidKeyException {
+        System.out.println("Getting challenges");
+        List<Challenge> challenges = new ArrayList<>();
         JWSUtil jwsUtil = JWSUtil.getInstance();
-        String s = jwsUtil.flattenedSignedJson(jwsUtil.generateProtectedHeaderKid(order.getAuthorizations().get(0)), "");
-        HttpResponse<String> send = HTTPUtil.postRequest(order.getAuthorizations().get(0), s);
-        List<Challenge> challengeList = Challenge.getChallengesFromAuthorizationResponse(send);
-        ChallengeType challengeType = ArgumentParser.getInstance().getChallenge();
-        for (Challenge c : challengeList) {
-            if (c.getType() == challengeType) {
-                return c;
+        for (String auth : order.getAuthorizations()) {
+            String s = jwsUtil.flattenedSignedJson(jwsUtil.generateProtectedHeaderKid(auth), "");
+            HttpResponse<String> send = HTTPUtil.postRequest(auth, s);
+            List<Challenge> challengeList = Challenge.getChallengesFromAuthorizationResponse(send);
+            ChallengeType challengeType = ArgumentParser.getInstance().getChallenge();
+            for (Challenge c : challengeList) {
+                if (c.getType() == challengeType) {
+                    challenges.add(c);
+                }
             }
         }
-        return null;
+
+        return challenges;
     }
 
     private static void beginChallenge(Challenge challenge) throws NoSuchAlgorithmException, IOException, InterruptedException, SignatureException, InvalidKeyException {
@@ -202,6 +210,7 @@ public class App {
 
     private static boolean pollAuthorizationResult(AcmeOrder order) throws InterruptedException, IOException, NoSuchAlgorithmException, SignatureException, InvalidKeyException {
         beginPollLatch.await();
+        beginPollLatch = new CountDownLatch(1);
         JWSUtil jwsUtil = JWSUtil.getInstance();
         int maximumTries = 30;
         do {
@@ -218,11 +227,11 @@ public class App {
             }
             if (challenge != null && challenge.getStatus().equals("valid")) {
                 return true;
-            } else if(challenge == null || challenge.getStatus().equals("invalid")){
+            } else if (challenge == null || challenge.getStatus().equals("invalid")) {
                 return false;
             }
             Thread.sleep(300);
-        }while (maximumTries-- > 0);
+        } while (maximumTries-- > 0);
         return false;
     }
 
@@ -238,7 +247,7 @@ public class App {
         ContentSigner signGen = new JcaContentSignerBuilder("SHA256withRSA").build(certificateKeyPair.getPrivate());
         PKCS10CertificationRequestBuilder builder = new JcaPKCS10CertificationRequestBuilder(subject, certificateKeyPair.getPublic());
         List<GeneralName> generalNames = new ArrayList<>();
-        for (String s: domains) {
+        for (String s : domains) {
             GeneralName generalName = new GeneralName(GeneralName.dNSName, s);
             generalNames.add(generalName);
         }
@@ -304,14 +313,15 @@ public class App {
     }
 
     private static final boolean DEBUG = false;
+
     private static String readCertificate() throws IOException {
         List<String> strings;
-        if(DEBUG)
+        if (DEBUG)
             strings = Files.readAllLines(Path.of("/home/valeriotor/go/pkg/mod/github.com/letsencrypt/pebble@v1.0.1/test/certs/pebble.minica.pem"));
         else
             strings = Files.readAllLines(Path.of("pebble.minica.pem"));
         strings.remove(0);
-        strings.remove(strings.size()-1);
+        strings.remove(strings.size() - 1);
         return String.join("", strings);
     }
 
