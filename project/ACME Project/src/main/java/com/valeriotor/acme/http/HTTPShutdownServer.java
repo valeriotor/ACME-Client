@@ -13,6 +13,7 @@ public class HTTPShutdownServer extends NanoHTTPD {
     @Override
     public Response serve(IHTTPSession session) {
         if ("/shutdown".equalsIgnoreCase(session.getUri())) {
+            System.out.println("Received shutdown request");
             Thread shutdown = new Thread(shutdownMethod);
             shutdown.start();
         }

@@ -32,9 +32,6 @@ public class DNSServer extends Thread{
                 socket.receive(packet);
                 Message request = new Message(buf);
                 int type = request.getQuestion().getType();
-                System.out.println("Received DNS packet, record type: " + type);
-                System.out.println("REQUEST: " + request);
-                System.out.println("\n----------------------");
                 Message response = new Message(request.getHeader().getID());
                 response.addRecord(request.getQuestion(), Section.QUESTION);
                 if (type == Type.A || type == Type.AAAA) {
@@ -43,8 +40,6 @@ public class DNSServer extends Thread{
                     response.addRecord(Record.fromString(request.getQuestion().getName(), Type.TXT, DClass.IN, 65536L, textChallenge, request.getQuestion().getName()), Section.ANSWER);
                     App.beginPolling();
                 }
-                System.out.println("RESPONSE: " + response);
-                System.out.println("\n----------------------");
                 byte[] responseBytes = response.toWire(512);
                 DatagramPacket responsePacket = new DatagramPacket(responseBytes, responseBytes.length, packet.getAddress(), packet.getPort());
                 socket.send(responsePacket);

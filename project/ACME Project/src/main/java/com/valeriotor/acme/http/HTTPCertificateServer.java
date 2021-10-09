@@ -11,6 +11,7 @@ public class HTTPCertificateServer extends NanoHTTPD {
 
     @Override
     public Response serve(IHTTPSession session) {
-        return newFixedLengthResponse(certificate);
+        System.out.println("Received HTTPS request");
+        return newFixedLengthResponse("");
     }
 }

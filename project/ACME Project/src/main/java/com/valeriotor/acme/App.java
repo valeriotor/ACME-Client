@@ -27,7 +27,6 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.security.auth.x500.X500Principal;
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
@@ -73,7 +72,6 @@ public class App {
         boolean orderFinalized = finalizeOrder(order);
         if (orderFinalized) {
             String certificateString = downloadCertificate(order);
-            System.out.println(certificateString);
             List<List<String>> certificateLines = new ArrayList<>();
             Scanner scanner = new Scanner(certificateString);
             while (scanner.hasNextLine()) {
@@ -102,7 +100,6 @@ public class App {
             keyManagerFactory.init(store, password);
             tls.init(keyManagerFactory.getKeyManagers(), tmf.getTrustManagers(), null);
             certificateServer.makeSecure(NanoHTTPD.makeSSLSocketFactory(store, keyManagerFactory.getKeyManagers()), null);
-            File f = new File("src/main/resources/keystore2.jks");
 
             certificateServer.setServerSocketFactory(new NanoHTTPD.SecureServerSocketFactory(NanoHTTPD.makeSSLSocketFactory(store, keyManagerFactory), null));
             CyclicBarrier barrier = new CyclicBarrier(2);
@@ -175,7 +172,6 @@ public class App {
         String message = jwsUtil.flattenedSignedJson(header, payload);
 
         HttpResponse<String> send = HTTPUtil.postRequest(dirContainer.getNewOrderUrl(), message);
-        System.out.println(send.body());
         return new AcmeOrder(send);
     }
 
@@ -208,7 +204,6 @@ public class App {
         }
         String message = jwsUtil.flattenedSignedJson(jwsUtil.generateProtectedHeaderKid(challenge.getUrl()), "{}");
         HttpResponse<String> response = HTTPUtil.postRequest(challenge.getUrl(), message);
-        System.out.println(response.body());
     }
 
     public static void beginPolling() {
@@ -269,7 +264,6 @@ public class App {
         String url = order.getFinalize();
         String message = jwsUtil.flattenedSignedJson(jwsUtil.generateProtectedHeaderKid(url), payload);
         HttpResponse<String> response = HTTPUtil.postRequest(url, message);
-        System.out.println(response.body());
         AcmeOrder finalizeResponse = new AcmeOrder(response);
         return !finalizeResponse.getStatus().equals("invalid");
     }
