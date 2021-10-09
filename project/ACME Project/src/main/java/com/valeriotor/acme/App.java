@@ -269,7 +269,6 @@ public class App {
         String url = order.getLocation();
         AcmeOrder finalOrder = null;
         do {
-            Thread.sleep(1400);
             String message2 = jwsUtil.flattenedSignedJson(jwsUtil.generateProtectedHeaderKid(url), "");
             HttpResponse<String> response2 = HTTPUtil.postRequest(url, message2);
             finalOrder = new AcmeOrder(response2);
