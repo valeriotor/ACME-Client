@@ -135,8 +135,8 @@ public class App {
         HTTPServerManager shutdownServer = new HTTPServerManager(new HTTPShutdownServer(5003, App::stopServers), barrier);
         servers.add(challengeServer);
         servers.add(shutdownServer);
-        new Thread(challengeServer).start();
-        new Thread(shutdownServer).start();
+        Thread t1 = new Thread(challengeServer);t1.setDaemon(true);t1.start();
+        Thread t2 = new Thread(shutdownServer);t2.setDaemon(true);t2.start();
         barrier.await();
     }
 
@@ -330,7 +330,7 @@ public class App {
         return certificate;
     }
 
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
 
     private static String readCertificate() throws IOException {
         List<String> strings;

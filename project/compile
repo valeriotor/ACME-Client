@@ -3,4 +3,4 @@
 echo "Compile your project here"
 
 #cd ACME\ Project/
-#mvn package
+mvn -f ACME\ Project/ package
