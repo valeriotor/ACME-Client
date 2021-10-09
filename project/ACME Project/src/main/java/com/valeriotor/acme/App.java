@@ -184,13 +184,15 @@ public class App {
 
     private static void beginChallenge(Challenge challenge) throws NoSuchAlgorithmException, IOException, InterruptedException, SignatureException, InvalidKeyException {
         System.out.println("Starting challenge");
+        JWSUtil jwsUtil = JWSUtil.getInstance();
         if (challenge.getType() == ChallengeType.HTTPS) {
-            JWSUtil jwsUtil = JWSUtil.getInstance();
             httpChallengeServer.setKeyAuthorization(jwsUtil.generateKeyAuthorization(challenge.getToken()));
-            String message = jwsUtil.flattenedSignedJson(jwsUtil.generateProtectedHeaderKid(challenge.getUrl()), "{}");
-            HttpResponse<String> response = HTTPUtil.postRequest(challenge.getUrl(), message);
-            System.out.println(response.body());
+        } else if (challenge.getType() == ChallengeType.DNS) {
+            dnsServer.setTextChallenge(jwsUtil.generateKeyAuthorization(challenge.getToken()));
         }
+        String message = jwsUtil.flattenedSignedJson(jwsUtil.generateProtectedHeaderKid(challenge.getUrl()), "{}");
+        HttpResponse<String> response = HTTPUtil.postRequest(challenge.getUrl(), message);
+        System.out.println(response.body());
     }
 
     public static void beginPolling() {
