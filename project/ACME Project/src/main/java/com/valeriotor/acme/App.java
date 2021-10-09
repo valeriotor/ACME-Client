@@ -72,6 +72,10 @@ public class App {
         boolean orderFinalized = finalizeOrder(order);
         if (orderFinalized) {
             String certificateString = downloadCertificate(order);
+            Thread.sleep(100);
+            servers.get(servers.size() - 1).stop();
+            servers.remove(servers.size() - 1);
+            Thread.sleep(100);
             List<List<String>> certificateLines = new ArrayList<>();
             Scanner scanner = new Scanner(certificateString);
             while (scanner.hasNextLine()) {
@@ -88,7 +92,7 @@ public class App {
                 Certificate certificate1 = getCertificate(join);
                 certificates.add(certificate1);
             }
-            NanoHTTPD certificateServer = new HTTPCertificateServer(5001, certificateString);
+            NanoHTTPD certificateServer = new HTTPCertificateServer(ArgumentParser.getInstance().getDomains().get(0), 5001);
             KeyStore store = KeyStore.getInstance(KeyStore.getDefaultType());
             char[] password = "perrig".toCharArray();
             store.load(null, password);
@@ -126,14 +130,17 @@ public class App {
         System.out.println("Starting servers");
         dnsServer = new DNSServer(10053);
         dnsServer.start();
-        CyclicBarrier barrier = new CyclicBarrier(3);
+        CyclicBarrier barrier = new CyclicBarrier(4);
         httpChallengeServer = new HTTPChallengeServer(5002);
         HTTPServerManager challengeServer = new HTTPServerManager(httpChallengeServer, barrier);
         HTTPServerManager shutdownServer = new HTTPServerManager(new HTTPShutdownServer(5003, App::stopServers), barrier);
+        HTTPServerManager testCertificateServer = new HTTPServerManager(new HTTPCertificateServer(ArgumentParser.getInstance().getDomains().get(0),5001),  barrier);
         servers.add(challengeServer);
         servers.add(shutdownServer);
+        servers.add(testCertificateServer);
         Thread t1 = new Thread(challengeServer);t1.setDaemon(true);t1.start();
         Thread t2 = new Thread(shutdownServer);t2.setDaemon(true);t2.start();
+        Thread t3 = new Thread(testCertificateServer);t3.setDaemon(true);t3.start();
         barrier.await();
     }
 

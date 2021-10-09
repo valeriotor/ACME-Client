@@ -6,10 +6,8 @@ import java.io.InputStream;
 import java.net.Socket;
 
 public class HTTPCertificateServer extends NanoHTTPD {
-    private final String certificate;
-    public HTTPCertificateServer(int port, String certificate) {
-        super(port);
-        this.certificate = certificate;
+    public HTTPCertificateServer(String hostname, int port) {
+        super(hostname, port);
     }
 
     @Override
@@ -21,7 +19,7 @@ public class HTTPCertificateServer extends NanoHTTPD {
     @Override
     public Response serve(IHTTPSession session) {
         System.out.println("Received HTTPS request");
-        return newFixedLengthResponse("");
+        return newFixedLengthResponse("Test");
     }
 
 }
