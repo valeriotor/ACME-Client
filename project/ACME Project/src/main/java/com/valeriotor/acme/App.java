@@ -249,6 +249,7 @@ public class App {
         String url = order.getFinalize();
         String message = jwsUtil.flattenedSignedJson(jwsUtil.generateProtectedHeaderKid(url), payload);
         HttpResponse<String> response = HTTPUtil.postRequest(url, message);
+        System.out.println(response.body());
         AcmeOrder finalizeResponse = new AcmeOrder(response);
         return !finalizeResponse.getStatus().equals("invalid");
     }

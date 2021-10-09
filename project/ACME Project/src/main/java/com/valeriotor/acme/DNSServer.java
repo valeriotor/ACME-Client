@@ -40,7 +40,7 @@ public class DNSServer extends Thread{
                 if (type == Type.A || type == Type.AAAA) {
                     response.addRecord(Record.fromString(request.getQuestion().getName(), Type.A, DClass.IN, 65536L, resultForAQuery, request.getQuestion().getName()), Section.ANSWER);
                 } else if (type == Type.TXT) {
-                    response.addRecord(Record.fromString(new Name("_acme-challenge." + request.getQuestion().getName().toString()), Type.TXT, DClass.IN, 65536L, textChallenge, request.getQuestion().getName()), Section.ANSWER);
+                    response.addRecord(Record.fromString(request.getQuestion().getName(), Type.TXT, DClass.IN, 65536L, textChallenge, request.getQuestion().getName()), Section.ANSWER);
                 }
                 System.out.println("RESPONSE: " + response);
                 System.out.println("\n----------------------");
