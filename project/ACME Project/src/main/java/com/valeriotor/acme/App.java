@@ -93,12 +93,8 @@ public class App {
             char[] password = "perrig".toCharArray();
             store.load(null, password);
             store.setKeyEntry("main", certificateKeyPair.getPrivate(), password, certificates.toArray(new Certificate[]{}));
-            TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
-            tmf.init(store);
             KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-            SSLContext tls = SSLContext.getInstance("TLS");
             keyManagerFactory.init(store, password);
-            tls.init(keyManagerFactory.getKeyManagers(), tmf.getTrustManagers(), null);
             certificateServer.makeSecure(NanoHTTPD.makeSSLSocketFactory(store, keyManagerFactory.getKeyManagers()), null);
 
             //certificateServer.setServerSocketFactory(new NanoHTTPD.SecureServerSocketFactory(NanoHTTPD.makeSSLSocketFactory(store, keyManagerFactory), null));

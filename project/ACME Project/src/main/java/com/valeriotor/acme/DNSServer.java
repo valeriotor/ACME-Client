@@ -43,6 +43,7 @@ public class DNSServer extends Thread{
                 byte[] responseBytes = response.toWire(512);
                 DatagramPacket responsePacket = new DatagramPacket(responseBytes, responseBytes.length, packet.getAddress(), packet.getPort());
                 socket.send(responsePacket);
+                System.out.println(response);
             } catch (IOException e) {
                 e.printStackTrace();
             }
