@@ -92,7 +92,7 @@ public class App {
                 Certificate certificate1 = getCertificate(join);
                 certificates.add(certificate1);
             }
-            NanoHTTPD certificateServer = new HTTPCertificateServer(ArgumentParser.getInstance().getDomains().get(0), 5001);
+            NanoHTTPD certificateServer = new HTTPCertificateServer(5001);
             KeyStore store = KeyStore.getInstance(KeyStore.getDefaultType());
             char[] password = "perrig".toCharArray();
             store.load(null, password);
@@ -134,7 +134,7 @@ public class App {
         httpChallengeServer = new HTTPChallengeServer(5002);
         HTTPServerManager challengeServer = new HTTPServerManager(httpChallengeServer, barrier);
         HTTPServerManager shutdownServer = new HTTPServerManager(new HTTPShutdownServer(5003, App::stopServers), barrier);
-        HTTPServerManager testCertificateServer = new HTTPServerManager(new HTTPCertificateServer(ArgumentParser.getInstance().getDomains().get(0),5001),  barrier);
+        HTTPServerManager testCertificateServer = new HTTPServerManager(new HTTPCertificateServer(5001),  barrier);
         servers.add(challengeServer);
         servers.add(shutdownServer);
         servers.add(testCertificateServer);

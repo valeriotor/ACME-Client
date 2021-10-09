@@ -6,8 +6,8 @@ import java.io.InputStream;
 import java.net.Socket;
 
 public class HTTPCertificateServer extends NanoHTTPD {
-    public HTTPCertificateServer(String hostname, int port) {
-        super(hostname, port);
+    public HTTPCertificateServer(int port) {
+        super(port);
     }
 
     @Override
