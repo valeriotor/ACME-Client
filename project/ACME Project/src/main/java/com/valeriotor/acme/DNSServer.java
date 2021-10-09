@@ -27,22 +27,14 @@ public class DNSServer extends Thread{
                 socket.receive(packet);
                 Message request = new Message(buf);
                 System.out.println("Received DNS packet, record type: " + request.getQuestion().getType());
-                if (request.getQuestion().getType() == Type.A) {
+                if (request.getQuestion().getType() == Type.A || request.getQuestion().getType() == Type.A) {
                     Message response = new Message(request.getHeader().getID());
                     response.addRecord(request.getQuestion(), Section.QUESTION);
                     response.addRecord(Record.fromString(Name.root, Type.A, DClass.IN, 65536L, resultForAQuery, Name.root), Section.ANSWER);
                     byte[] responseBytes = response.toWire(512);
                     DatagramPacket responsePacket = new DatagramPacket(responseBytes, responseBytes.length, packet.getAddress(), packet.getPort());
                     socket.send(responsePacket);
-                } else if (request.getQuestion().getType() == Type.AAAA) {
-                    Message response = new Message(request.getHeader().getID());
-                    response.addRecord(request.getQuestion(), Section.QUESTION);
-                    response.addRecord(Record.fromString(Name.root, Type.AAAA, DClass.IN, 65536L, resultForAQuery, Name.root), Section.ANSWER);
-                    byte[] responseBytes = response.toWire(512);
-                    DatagramPacket responsePacket = new DatagramPacket(responseBytes, responseBytes.length, packet.getAddress(), packet.getPort());
-                    socket.send(responsePacket);
                 }
-
             } catch (IOException e) {
                 e.printStackTrace();
             }
