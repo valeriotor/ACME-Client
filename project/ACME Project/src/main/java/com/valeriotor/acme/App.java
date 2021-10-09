@@ -330,7 +330,7 @@ public class App {
         return certificate;
     }
 
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
 
     private static String readCertificate() throws IOException {
         List<String> strings;
