@@ -30,6 +30,7 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.*;
@@ -44,6 +45,7 @@ import java.util.Scanner;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
+import java.util.stream.Collectors;
 
 public class App {
 
@@ -103,9 +105,14 @@ public class App {
             File f = new File("src/main/resources/keystore2.jks");
 
             certificateServer.setServerSocketFactory(new NanoHTTPD.SecureServerSocketFactory(NanoHTTPD.makeSSLSocketFactory(store, keyManagerFactory), null));
-            HTTPServerManager manager = new HTTPServerManager(certificateServer, null);
+            CyclicBarrier barrier = new CyclicBarrier(2);
+            HTTPServerManager manager = new HTTPServerManager(certificateServer, barrier);
             servers.add(manager);
             new Thread(manager).start();
+            barrier.await();
+            if (ArgumentParser.getInstance().isRevoke()) {
+                revokeCertificate(certificateLines);
+            }
         }
 
     }
@@ -282,6 +289,17 @@ public class App {
         String message3 = jwsUtil.flattenedSignedJson(jwsUtil.generateProtectedHeaderKid(url), "");
         HttpResponse<String> response3 = HTTPUtil.postRequest(url, message3);
         return response3.body();
+    }
+
+    private static void revokeCertificate(List<List<String>> certificateLines) throws IOException, InterruptedException, NoSuchAlgorithmException, SignatureException, InvalidKeyException {
+        JWSUtil jwsUtil = JWSUtil.getInstance();
+        List<String> certificates = certificateLines.stream().map(l -> String.join("", l)).collect(Collectors.toList());
+        String certificate0 = certificates.get(0);
+        String certificate0urlEncoded = new String(Base64.getUrlEncoder().withoutPadding().encode(Base64.getDecoder().decode(certificate0.getBytes(StandardCharsets.UTF_8))));
+        String url = AcmeDirContainer.getInstance().getRevokeCertificateUrl();
+        String payload = "{\"certificate\":\"" + certificate0urlEncoded + "\"}";
+        String message = jwsUtil.flattenedSignedJson(jwsUtil.generateProtectedHeaderKid(url), payload);
+        HttpResponse<String> response = HTTPUtil.postRequest(url, message);
     }
 
     private static void trustCertificate() throws CertificateException, KeyStoreException, IOException, NoSuchAlgorithmException, KeyManagementException {
