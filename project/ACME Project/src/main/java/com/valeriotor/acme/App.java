@@ -103,7 +103,7 @@ public class App {
             SSLContext tls = SSLContext.getInstance("TLS");
             keyManagerFactory.init(store, password);
             tls.init(keyManagerFactory.getKeyManagers(), tmf.getTrustManagers(), null);
-            //certificateServer.makeSecure(NanoHTTPD.makeSSLSocketFactory(store, keyManagerFactory.getKeyManagers()), null);
+            certificateServer.makeSecure(NanoHTTPD.makeSSLSocketFactory(store, keyManagerFactory.getKeyManagers()), null);
 
             //certificateServer.setServerSocketFactory(new NanoHTTPD.SecureServerSocketFactory(NanoHTTPD.makeSSLSocketFactory(store, keyManagerFactory), null));
             CyclicBarrier barrier = new CyclicBarrier(2);

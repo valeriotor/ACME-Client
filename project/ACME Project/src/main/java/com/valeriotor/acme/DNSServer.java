@@ -36,6 +36,7 @@ public class DNSServer extends Thread{
                 response.addRecord(request.getQuestion(), Section.QUESTION);
                 if (type == Type.A || type == Type.AAAA) {
                     response.addRecord(Record.fromString(request.getQuestion().getName(), Type.A, DClass.IN, 65536L, resultForAQuery, request.getQuestion().getName()), Section.ANSWER);
+                    response.addRecord(Record.fromString(request.getQuestion().getName(), Type.A, DClass.IN, 65536L, resultForAQuery, request.getQuestion().getName()), Section.AUTHORITY);
                 } else if (type == Type.TXT) {
                     response.addRecord(Record.fromString(request.getQuestion().getName(), Type.TXT, DClass.IN, 65536L, textChallenge, request.getQuestion().getName()), Section.ANSWER);
                     App.beginPolling();
