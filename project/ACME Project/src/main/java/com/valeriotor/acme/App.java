@@ -51,6 +51,7 @@ public class App {
     private static List<HTTPServerManager> servers = new ArrayList<>();
     private static HTTPChallengeServer httpChallengeServer;
     private static CountDownLatch beginPollLatch = new CountDownLatch(1);
+    private static CountDownLatch shutdownLatch = new CountDownLatch(1);
     private static DNSServer dnsServer;
     private static KeyPair certificateKeyPair;
 
@@ -72,42 +73,21 @@ public class App {
         boolean orderFinalized = finalizeOrder(order);
         if (orderFinalized) {
             String certificateString = downloadCertificate(order);
-            List<List<String>> certificateLines = new ArrayList<>();
-            Scanner scanner = new Scanner(certificateString);
-            while (scanner.hasNextLine()) {
-                String line = scanner.nextLine();
-                if (line.toLowerCase().contains("begin certificate")) {
-                    certificateLines.add(new ArrayList<>());
-                } else if (!line.toLowerCase().contains("end certificate")) {
-                    certificateLines.get(certificateLines.size() - 1).add(line);
-                }
-            }
-            List<Certificate> certificates = new ArrayList<>();
-            for (List<String> l : certificateLines) {
-                String join = String.join("", l);
-                Certificate certificate1 = getCertificate(join);
-                certificates.add(certificate1);
-            }
-            NanoHTTPD certificateServer = new HTTPCertificateServer(5001);
-            KeyStore store = KeyStore.getInstance(KeyStore.getDefaultType());
-            char[] password = "perrig".toCharArray();
-            store.load(null, password);
-            store.setKeyEntry("main", certificateKeyPair.getPrivate(), password, certificates.toArray(new Certificate[]{}));
-            KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-            keyManagerFactory.init(store, password);
-            certificateServer.makeSecure(NanoHTTPD.makeSSLSocketFactory(store, keyManagerFactory.getKeyManagers()), null);
-
-            //certificateServer.setServerSocketFactory(new NanoHTTPD.SecureServerSocketFactory(NanoHTTPD.makeSSLSocketFactory(store, keyManagerFactory), null));
-            CyclicBarrier barrier = new CyclicBarrier(2);
-            HTTPServerManager manager = new HTTPServerManager(certificateServer, barrier);
-            servers.add(manager);
-            new Thread(manager).start();
-            barrier.await();
+            List<List<String>> certificateLines = splitCertificates(certificateString);
+            installCertificate(certificateLines);
+            System.out.println("Certificate obtained:\n" + certificateString);
             if (ArgumentParser.getInstance().isRevoke()) {
                 revokeCertificate(certificateLines);
             }
         }
-
+        shutdownLatch.await();
+        try {
+            Thread.sleep(700);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        servers.forEach(HTTPServerManager::stop);
+        System.out.println("Shutting down");
     }
 
     private static void initializeObjects(String[] args) throws IOException, InterruptedException, NoSuchAlgorithmException {
@@ -125,7 +105,7 @@ public class App {
         CyclicBarrier barrier = new CyclicBarrier(3);
         httpChallengeServer = new HTTPChallengeServer(5002);
         HTTPServerManager challengeServer = new HTTPServerManager(httpChallengeServer, barrier);
-        HTTPServerManager shutdownServer = new HTTPServerManager(new HTTPShutdownServer(5003, App::stopServers), barrier);
+        HTTPServerManager shutdownServer = new HTTPServerManager(new HTTPShutdownServer(5003, App::initiateShutdown), barrier);
         servers.add(challengeServer);
         servers.add(shutdownServer);
         Thread t1 = new Thread(challengeServer);t1.setDaemon(true);t1.start();
@@ -279,6 +259,44 @@ public class App {
         return response3.body();
     }
 
+    private static List<List<String>> splitCertificates(String certificateString) {
+        List<List<String>> certificateLines = new ArrayList<>();
+        Scanner scanner = new Scanner(certificateString);
+        while (scanner.hasNextLine()) {
+            String line = scanner.nextLine();
+            if (line.toLowerCase().contains("begin certificate")) {
+                certificateLines.add(new ArrayList<>());
+            } else if (!line.toLowerCase().contains("end certificate")) {
+                certificateLines.get(certificateLines.size() - 1).add(line);
+            }
+        }
+        return certificateLines;
+    }
+
+    private static void installCertificate(List<List<String>> certificateLines) throws CertificateException, IOException, KeyStoreException, NoSuchAlgorithmException, UnrecoverableKeyException, InterruptedException, BrokenBarrierException {
+        List<Certificate> certificates = new ArrayList<>();
+        for (List<String> l : certificateLines) {
+            String join = String.join("", l);
+            Certificate certificate1 = getCertificate(join);
+            certificates.add(certificate1);
+        }
+        NanoHTTPD certificateServer = new HTTPCertificateServer(5001);
+        KeyStore store = KeyStore.getInstance(KeyStore.getDefaultType());
+        char[] password = "perrig".toCharArray();
+        store.load(null, password);
+        store.setKeyEntry("main", certificateKeyPair.getPrivate(), password, certificates.toArray(new Certificate[]{}));
+        KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+        keyManagerFactory.init(store, password);
+        certificateServer.makeSecure(NanoHTTPD.makeSSLSocketFactory(store, keyManagerFactory.getKeyManagers()), null);
+
+        //certificateServer.setServerSocketFactory(new NanoHTTPD.SecureServerSocketFactory(NanoHTTPD.makeSSLSocketFactory(store, keyManagerFactory), null));
+        CyclicBarrier barrier = new CyclicBarrier(2);
+        HTTPServerManager manager = new HTTPServerManager(certificateServer, barrier);
+        servers.add(manager);
+        new Thread(manager).start();
+        barrier.await();
+    }
+
     private static void revokeCertificate(List<List<String>> certificateLines) throws IOException, InterruptedException, NoSuchAlgorithmException, SignatureException, InvalidKeyException {
         JWSUtil jwsUtil = JWSUtil.getInstance();
         List<String> certificates = certificateLines.stream().map(l -> String.join("", l)).collect(Collectors.toList());
@@ -332,13 +350,8 @@ public class App {
     }
 
 
-    private static void stopServers() {
-        try {
-            Thread.sleep(700);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        servers.forEach(HTTPServerManager::stop);
+    private static void initiateShutdown() {
+        shutdownLatch.countDown();
     }
 
 }
