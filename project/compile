@@ -2,4 +2,4 @@
 
 echo "Compile your project here"
 
-#mvn -f ACME\ Project/ package
+mvn -f ACME\ Project/ package
