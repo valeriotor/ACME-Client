@@ -87,6 +87,7 @@ public class App {
             e.printStackTrace();
         }
         servers.forEach(HTTPServerManager::stop);
+        dnsServer.stopServer();
         System.out.println("Shutting down");
     }
 
@@ -108,8 +109,8 @@ public class App {
         HTTPServerManager shutdownServer = new HTTPServerManager(new HTTPShutdownServer(5003, App::initiateShutdown), barrier);
         servers.add(challengeServer);
         servers.add(shutdownServer);
-        Thread t1 = new Thread(challengeServer);t1.setDaemon(true);t1.start();
-        Thread t2 = new Thread(shutdownServer);t2.setDaemon(true);t2.start();
+        Thread t1 = new Thread(challengeServer);t1.start();
+        Thread t2 = new Thread(shutdownServer);t2.start();
         barrier.await();
     }
 
