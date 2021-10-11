@@ -31,6 +31,7 @@ public class DNSServer extends Thread{
             try {
                 socket.receive(packet);
                 Message request = new Message(buf);
+                System.out.println(request);
                 int type = request.getQuestion().getType();
                 Message response = new Message(request.getHeader().getID());
                 response.addRecord(request.getQuestion(), Section.QUESTION);
