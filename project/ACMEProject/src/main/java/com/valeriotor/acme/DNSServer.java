@@ -9,6 +9,7 @@ import java.net.SocketException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 import java.util.Base64;
 
 public class DNSServer extends Thread{
@@ -37,12 +38,13 @@ public class DNSServer extends Thread{
                 response.addRecord(request.getQuestion(), Section.QUESTION);
                 if (type == Type.A) {
                     response.addRecord(org.xbill.DNS.Record.fromString(request.getQuestion().getName(), Type.A, DClass.IN, 65536L, resultForAQuery, request.getQuestion().getName()), Section.ANSWER);
-                    System.out.println(response);
                 } else if (type == Type.TXT) {
                     response.addRecord(org.xbill.DNS.Record.fromString(request.getQuestion().getName(), Type.TXT, DClass.IN, 65536L, textChallenge, request.getQuestion().getName()), Section.ANSWER);
                     App.beginPolling();
                 }
+                System.out.println(response);
                 byte[] responseBytes = response.toWire(512);
+                System.out.println(Arrays.toString(responseBytes));
                 DatagramPacket responsePacket = new DatagramPacket(responseBytes, responseBytes.length, packet.getAddress(), packet.getPort());
                 socket.send(responsePacket);
             } catch (IOException e) {
