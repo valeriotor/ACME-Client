@@ -31,7 +31,7 @@ public class DNSServer extends Thread{
             try {
                 socket.receive(packet);
                 Message request = new Message(buf);
-                System.out.println(packet);
+                System.out.println(packet.getAddress() + " " + packet.getPort());
                 System.out.println(request);
                 int type = request.getQuestion().getType();
                 Header header = new Header(request.getHeader().getID());
@@ -41,16 +41,16 @@ public class DNSServer extends Thread{
 
                 response.addRecord(request.getQuestion(), Section.QUESTION);
                 if (type == Type.A) {
-                    response.addRecord(org.xbill.DNS.Record.fromString(request.getQuestion().getName(), Type.A, DClass.IN, 65536L, resultForAQuery, Name.root), Section.ANSWER);
+                    response.addRecord(org.xbill.DNS.Record.fromString(request.getQuestion().getName(), Type.A, DClass.IN, 30, resultForAQuery, Name.root), Section.ANSWER);
                 } else if (type == Type.TXT) {
-                    response.addRecord(org.xbill.DNS.Record.fromString(request.getQuestion().getName(), Type.TXT, DClass.IN, 65536L, textChallenge, Name.root), Section.ANSWER);
+                    response.addRecord(org.xbill.DNS.Record.fromString(request.getQuestion().getName(), Type.TXT, DClass.IN, 30, textChallenge, Name.root), Section.ANSWER);
                     App.beginPolling();
                 }
                 byte[] responseBytes = response.toWire(256);
                 System.out.println(response);
                 DatagramPacket responsePacket = new DatagramPacket(responseBytes, responseBytes.length, packet.getAddress(), packet.getPort());
                 socket.send(responsePacket);
-                System.out.println(responsePacket);
+                System.out.println(responsePacket.getAddress() + " " + responsePacket.getPort());
             } catch (IOException e) {
                 e.printStackTrace();
             }
