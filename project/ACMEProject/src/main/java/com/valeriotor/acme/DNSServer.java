@@ -37,9 +37,9 @@ public class DNSServer extends Thread{
                 Message response = new Message(request.getHeader().getID());
                 response.addRecord(request.getQuestion(), Section.QUESTION);
                 if (type == Type.A) {
-                    response.addRecord(org.xbill.DNS.Record.fromString(request.getQuestion().getName(), Type.A, DClass.IN, 65536L, resultForAQuery, request.getQuestion().getName()), Section.ANSWER);
+                    response.addRecord(org.xbill.DNS.Record.fromString(request.getQuestion().getName(), Type.A, DClass.IN, 65536L, resultForAQuery, Name.root), Section.ANSWER);
                 } else if (type == Type.TXT) {
-                    response.addRecord(org.xbill.DNS.Record.fromString(request.getQuestion().getName(), Type.TXT, DClass.IN, 65536L, textChallenge, request.getQuestion().getName()), Section.ANSWER);
+                    response.addRecord(org.xbill.DNS.Record.fromString(request.getQuestion().getName(), Type.TXT, DClass.IN, 65536L, textChallenge, Name.root), Section.ANSWER);
                     App.beginPolling();
                 }
                 System.out.println(response);
