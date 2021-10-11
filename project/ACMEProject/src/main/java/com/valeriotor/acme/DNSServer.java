@@ -31,8 +31,6 @@ public class DNSServer extends Thread{
             try {
                 socket.receive(packet);
                 Message request = new Message(buf);
-                System.out.println(packet.getAddress() + " " + packet.getPort());
-                System.out.println(request);
                 int type = request.getQuestion().getType();
                 Header header = new Header(request.getHeader().getID());
                 header.setFlag(Flags.RA);
@@ -50,10 +48,8 @@ public class DNSServer extends Thread{
                 }
 
                 byte[] responseBytes = response.toWire(256);
-                System.out.println(response);
                 DatagramPacket responsePacket = new DatagramPacket(responseBytes, responseBytes.length, packet.getAddress(), packet.getPort());
                 socket.send(responsePacket);
-                System.out.println(responsePacket.getAddress() + " " + responsePacket.getPort());
             } catch (IOException e) {
                 e.printStackTrace();
             }

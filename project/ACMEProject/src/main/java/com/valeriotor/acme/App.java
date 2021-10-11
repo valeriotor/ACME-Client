@@ -75,7 +75,6 @@ public class App {
             String certificateString = downloadCertificate(order);
             List<List<String>> certificateLines = splitCertificates(certificateString);
             installCertificate(certificateLines);
-            System.out.println("Certificate obtained:\n" + certificateString);
             if (ArgumentParser.getInstance().isRevoke()) {
                 revokeCertificate(certificateLines);
             }
@@ -87,11 +86,9 @@ public class App {
             e.printStackTrace();
         }
         servers.forEach(HTTPServerManager::stop);
-        System.out.println("Shutting down");
     }
 
     private static void initializeObjects(String[] args) throws IOException, InterruptedException, NoSuchAlgorithmException {
-        System.out.println("Initializing objects");
         ArgumentParser.tryCreateInstance(args);
         AcmeDirContainer.tryCreateInstance();
         NonceUtil.tryCreateInstance();
@@ -99,7 +96,6 @@ public class App {
     }
 
     private static void startServers() throws IOException, BrokenBarrierException, InterruptedException {
-        System.out.println("Starting servers");
         dnsServer = new DNSServer(10053);
         dnsServer.start();
         CyclicBarrier barrier = new CyclicBarrier(3);
@@ -114,7 +110,6 @@ public class App {
     }
 
     private static void createAccount() throws NoSuchAlgorithmException, SignatureException, InvalidKeyException, IOException, InterruptedException {
-        System.out.println("Creating account");
         String payload = "{\n" +
                 "       \"termsOfServiceAgreed\": true,\n" + //maybe comment this out?
                 "       \"contact\": [\n" +
@@ -132,7 +127,6 @@ public class App {
     }
 
     private static AcmeOrder createOrder() throws IOException, InterruptedException, NoSuchAlgorithmException, SignatureException, InvalidKeyException {
-        System.out.println("Creating order");
         StringBuilder sb = new StringBuilder();
         for (String domain : ArgumentParser.getInstance().getDomains()) {
             Identifier i = new Identifier(domain);
@@ -152,7 +146,6 @@ public class App {
     }
 
     private static List<Challenge> getChallenges(AcmeOrder order) throws IOException, InterruptedException, NoSuchAlgorithmException, SignatureException, InvalidKeyException {
-        System.out.println("Getting challenges");
         List<Challenge> challenges = new ArrayList<>();
         JWSUtil jwsUtil = JWSUtil.getInstance();
         for (String auth : order.getAuthorizations()) {
@@ -171,7 +164,6 @@ public class App {
     }
 
     private static void beginChallenge(Challenge challenge) throws NoSuchAlgorithmException, IOException, InterruptedException, SignatureException, InvalidKeyException {
-        System.out.println("Starting challenge");
         JWSUtil jwsUtil = JWSUtil.getInstance();
         if (challenge.getType() == ChallengeType.HTTPS) {
             httpChallengeServer.setKeyAuthorization(jwsUtil.generateKeyAuthorization(challenge.getToken()));
@@ -213,7 +205,6 @@ public class App {
     }
 
     private static boolean finalizeOrder(AcmeOrder order) throws IOException, InterruptedException, NoSuchAlgorithmException, SignatureException, InvalidKeyException, NoSuchProviderException, CertificateEncodingException, OperatorCreationException {
-        System.out.println("Finalizing order");
         JWSUtil jwsUtil = JWSUtil.getInstance();
         KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
         kpg.initialize(2048);
@@ -244,7 +235,6 @@ public class App {
     }
 
     private static String downloadCertificate(AcmeOrder order) throws InterruptedException, IOException, NoSuchAlgorithmException, SignatureException, InvalidKeyException {
-        System.out.println("Downloading certificate");
         JWSUtil jwsUtil = JWSUtil.getInstance();
         String url = order.getLocation();
         AcmeOrder finalOrder = null;
