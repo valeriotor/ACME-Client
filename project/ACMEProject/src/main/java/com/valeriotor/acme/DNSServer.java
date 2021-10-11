@@ -14,7 +14,7 @@ import java.util.Base64;
 public class DNSServer extends Thread{
     private final DatagramSocket socket;
     private final String resultForAQuery;
-    private String textChallenge;
+    private String textChallenge; //todo: might want to make this atomic/volatile
     private boolean running = true;
 
     public DNSServer(int port) throws SocketException {
@@ -31,6 +31,7 @@ public class DNSServer extends Thread{
             try {
                 socket.receive(packet);
                 Message request = new Message(buf);
+                System.out.println(request.isSigned());
                 System.out.println(packet.getAddress() + " " + packet.getPort());
                 System.out.println(request);
                 int type = request.getQuestion().getType();
@@ -46,6 +47,7 @@ public class DNSServer extends Thread{
                     response.addRecord(org.xbill.DNS.Record.fromString(request.getQuestion().getName(), Type.TXT, DClass.IN, 30, textChallenge, Name.root), Section.ANSWER);
                     App.beginPolling();
                 }
+
                 byte[] responseBytes = response.toWire(256);
                 System.out.println(response);
                 DatagramPacket responsePacket = new DatagramPacket(responseBytes, responseBytes.length, packet.getAddress(), packet.getPort());
