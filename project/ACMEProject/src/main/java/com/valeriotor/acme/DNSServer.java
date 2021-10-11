@@ -66,9 +66,9 @@ public class DNSServer extends Thread{
 
         response.addRecord(request.getQuestion(), Section.QUESTION);
         if (type == Type.A) {
-            response.addRecord(Record.fromString(request.getQuestion().getName(), Type.A, DClass.IN, 30, resultForAQuery, Name.root), Section.ANSWER);
+            response.addRecord(org.xbill.DNS.Record.fromString(request.getQuestion().getName(), Type.A, DClass.IN, 30, resultForAQuery, Name.root), Section.ANSWER);
         } else if (type == Type.TXT) {
-            response.addRecord(Record.fromString(request.getQuestion().getName(), Type.TXT, DClass.IN, 30, textChallenge, Name.root), Section.ANSWER);
+            response.addRecord(org.xbill.DNS.Record.fromString(request.getQuestion().getName(), Type.TXT, DClass.IN, 30, textChallenge, Name.root), Section.ANSWER);
             App.beginPolling();
         }
         byte[] responseBytes = response.toWire(256);
