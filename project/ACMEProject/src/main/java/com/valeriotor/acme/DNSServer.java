@@ -34,7 +34,11 @@ public class DNSServer extends Thread{
                 System.out.println(packet);
                 System.out.println(request);
                 int type = request.getQuestion().getType();
-                Message response = new Message(request.getHeader().getID());
+                Header header = new Header(request.getHeader().getID());
+                header.setFlag(Flags.RA);
+                Message response = new Message();
+                response.setHeader(header);
+
                 response.addRecord(request.getQuestion(), Section.QUESTION);
                 if (type == Type.A) {
                     response.addRecord(org.xbill.DNS.Record.fromString(request.getQuestion().getName(), Type.A, DClass.IN, 65536L, resultForAQuery, Name.root), Section.ANSWER);
