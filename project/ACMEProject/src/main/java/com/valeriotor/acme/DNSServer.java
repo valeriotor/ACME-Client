@@ -20,7 +20,7 @@ public class DNSServer extends Thread{
     public DNSServer(int port) throws SocketException {
         this.socket = new DatagramSocket(port);
         resultForAQuery = ArgumentParser.getInstance().getDnsRecord();
-        setDaemon(true);
+        //setDaemon(true);
     }
 
     @Override
@@ -49,6 +49,7 @@ public class DNSServer extends Thread{
                 e.printStackTrace();
             }
         }
+        System.out.println("Closing DNS Socket");
         socket.close();
     }
 
