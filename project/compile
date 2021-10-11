@@ -1,5 +1,5 @@
 #!/bin/bash
 
 echo "Compile your project here"
-
-mvn -f ACMEProject/ package
+ls
+mvn -f project/ACMEProject/ package
