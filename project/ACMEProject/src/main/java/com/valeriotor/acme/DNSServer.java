@@ -15,7 +15,7 @@ public class DNSServer extends Thread{
     private final DatagramSocket socket;
     private final String resultForAQuery;
     private String textChallenge; //todo: might want to make this atomic/volatile
-    private boolean running = true;
+    private volatile boolean running = true;
 
     public DNSServer(int port) throws SocketException {
         this.socket = new DatagramSocket(port);
@@ -51,7 +51,7 @@ public class DNSServer extends Thread{
                 DatagramPacket responsePacket = new DatagramPacket(responseBytes, responseBytes.length, packet.getAddress(), packet.getPort());
                 socket.send(responsePacket);
             } catch (IOException e) {
-                e.printStackTrace();
+                //e.printStackTrace();
             }
         }
         socket.close();
@@ -61,5 +61,10 @@ public class DNSServer extends Thread{
         MessageDigest digest = MessageDigest.getInstance("SHA-256");
         byte[] hash = digest.digest(textChallenge.getBytes(StandardCharsets.UTF_8));
         this.textChallenge = new String(Base64.getUrlEncoder().withoutPadding().encode(hash));
+    }
+
+    public void stopServer() {
+        running = false;
+        socket.close();
     }
 }

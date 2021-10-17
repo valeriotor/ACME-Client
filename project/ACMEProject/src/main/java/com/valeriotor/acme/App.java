@@ -86,6 +86,9 @@ public class App {
             e.printStackTrace();
         }
         servers.forEach(HTTPServerManager::stop);
+        dnsServer.stopServer();
+        Thread.sleep(1000);
+        System.exit(1);
     }
 
     private static void initializeObjects(String[] args) throws IOException, InterruptedException, NoSuchAlgorithmException {
@@ -104,8 +107,8 @@ public class App {
         HTTPServerManager shutdownServer = new HTTPServerManager(new HTTPShutdownServer(5003, App::initiateShutdown), barrier);
         servers.add(challengeServer);
         servers.add(shutdownServer);
-        Thread t1 = new Thread(challengeServer);t1.setDaemon(true);t1.start();
-        Thread t2 = new Thread(shutdownServer);t2.setDaemon(true);t2.start();
+        Thread t1 = new Thread(challengeServer);t1.start();
+        Thread t2 = new Thread(shutdownServer);t2.start();
         barrier.await();
     }
 
